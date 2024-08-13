@@ -53,4 +53,92 @@ cumpleHorario(vale, Dia, horario(Desde, Hasta)):-
 atiendeDiaHorario(Persona, Dia, Hora):-
     cumpleHorario(Persona, Dia, horario(Desde, Hasta)),
     between(Desde, Hasta, Hora).
+
+% Punto 3: Forever alone (2 puntos)
+% Definir un predicado que permita saber si una persona en un día y horario determinado está atendiendo ella sola. En este predicado debe utilizar not/1,
+% y debe ser inversible para relacionar personas. Ejemplos:
+% ● si preguntamos quiénes están forever alone el martes a las 19, lucas es un individuo que satisface esa relación.
+% ● si preguntamos quiénes están forever alone el jueves a las 10, juanFdS es una respuesta posible.
+% ● si preguntamos si martu está forever alone el miércoles a las 22, nos debe decir que no (martu hace un turno diferente)
+% ● martu sí está forever alone el miércoles a las 23
+% ● el lunes a las 10 dodain no está forever alone, porque vale también está
+
+% foreverAlone(Persona, Dia, Horario).
+foreverAlone(Persona, Dia, Horario):-
+    atiendeDiaHorario(Persona, Dia, Horario),
+    not((atiendeDiaHorario(OtraPersona, Dia, Horario), OtraPersona \= Persona)).
+
+% Punto 4: posibilidades de atención (3 puntos / 1 punto)
+% Dado un día, queremos relacionar qué personas podrían estar atendiendo el kiosko en algún momento de ese día. Por ejemplo, si preguntamos por el 
+% miércoles, tiene que darnos esta combinatoria:
+% ● nadie
+% ● dodain solo
+% ● dodain y leoC
+% ● dodain, vale, martu y leoC
+% ● vale y martu
+% ● etc.
+% Queremos saber todas las posibilidades de atención de ese día. La única restricción es que la persona atienda ese día (no puede aparecer lucas, por 
+% ejemplo, porque no atiende el miércoles).
+% Punto extra: indique qué conceptos en conjunto permiten resolver este requerimiento, justificando su respuesta.
+
+puedenAtenderEseDia(Persona, Dia, Personas):-
+    findall(Persona, atiendeDiaHorario(Persona, Dia, _), Personas).
+
+% Solucion Propuesta (No la entendi)
+% posibilidadesAtencion(Dia, Personas):-
+%   findall(Persona, distinct(Persona, quienAtiende(Persona, Dia, _)), PersonasPosibles),
+%   combinar(PersonasPosibles, Personas).
+
+% combinar([], []).
+% combinar([Persona|PersonasPosibles], [Persona|Personas]):-combinar(PersonasPosibles, Personas).
+% combinar([_|PersonasPosibles], Personas):-combinar(PersonasPosibles, Personas).
     
+% Punto 5: ventas / suertudas (4 puntos)
+% En el kiosko tenemos por el momento tres ventas posibles:
+% ● golosinas, en cuyo caso registramos el valor en plata -> golosina(Precio)
+% ● cigarrillos, de los cuales registramos todas las marcas de cigarrillos que se vendieron (ej: Marlboro y Particulares) -> cigarillos([Marcas])
+% ● bebidas, en cuyo caso registramos si son alcohólicas y la cantidad -> bebidas(Cantidad, GradoAlcohol)
+% Queremos agregar las siguientes cláusulas:
+% ● dodain hizo las siguientes ventas el lunes 10 de agosto: golosinas por $ 1200, cigarrillos Jockey, golosinas por $ 50
+% ● dodain hizo las siguientes ventas el miércoles 12 de agosto: 8 bebidas alcohólicas, 1 bebida no-alcohólica, golosinas por $ 10
+% ● martu hizo las siguientes ventas el miercoles 12 de agosto: golosinas por $ 1000, cigarrillos Chesterfield, Colorado y Parisiennes.
+% ● lucas hizo las siguientes ventas el martes 11 de agosto: golosinas por $ 600.
+% ● lucas hizo las siguientes ventas el martes 18 de agosto: 2 bebidas no-alcohólicas y cigarrillos Derby.
+% Queremos saber si una persona vendedora es suertuda, esto ocurre si para todos los días en los que vendió, la primera venta que hizo fue importante. 
+% Una venta es importante:
+% ● en el caso de las golosinas, si supera los $ 100.
+% ● en el caso de los cigarrillos, si tiene más de dos marcas.
+% ● en el caso de las bebidas, si son alcohólicas o son más de 5.
+% El predicado debe ser inversible: martu y dodain son personas suertudas.
+
+% esSuertudo(Persona).
+esSuertudo(Persona):-
+    vendio(Persona, _, _),
+    forall(vendio(Persona, _, Ventas), (primeraVenta(Ventas, PrimeraVenta), esVentaImportante(PrimeraVenta))).
+
+% primeraVenta(Ventas, PrimeraVenta)
+primeraVenta([PrimeraVenta | _], PrimeraVenta).
+
+% vendio(Persona, Fecha, Ventas).
+vendio(dodain, fecha(lunes, 10, agosto), [golosinas(1200), cigarrillos([jockey]), golosinas(50)]).
+vendio(dodain, fecha(miercoles, 12, agosto), [bebidas(8, alcoholicas), bebidas(1, noAlcoholicas), golosinas(10)]).
+vendio(martu, fecha(miercoles, 12, agosto), [golosinas(1000), cigarrillos([chesterfield, colorado, parisiennes])]).
+vendio(lucas, fecha(martes, 11, agosto), [golosinas(600)]).
+vendio(lucas, fecha(martes, 18, agosto), [bebidas(2, noAlcoholicas), cigarrillos([derby])]).
+
+% esVentaImportante(Producto)
+esVentaImportante(golosinas(Precio)):-
+    Precio > 100.
+esVentaImportante(cigarrillos(Marcas)):-
+    length(Marcas, Cantidad),
+    Cantidad > 2.
+esVentaImportante(bebidas(_, GradoAlcohol)):-
+    GradoAlcohol = alcoholicas.
+esVentaImportante(bebidas(Cantidad, _)):-
+    Cantidad > 5.
+
+
+
+
+
+
